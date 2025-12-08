@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "run main",
+      "type": "shell",
+      "command": "python main.py",
+    },
+    {
+      "label": "run test",
+      "type": "shell",
+      "command": "python test.py",
+    },
+    {
+      "label": "run physics",
+      "type": "shell",
+      "command": "python physics.py",
+    }
+  ]
+}
