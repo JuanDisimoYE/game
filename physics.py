@@ -1,6 +1,7 @@
 import math
 import pygame
 from char import timer
+import os, pathlib
 
 
 class circle:
@@ -23,7 +24,7 @@ class circle:
         return self.get_mask().overlap(mask, self.__get_difference(default_position))
     
     def __get_difference(self, default_position:tuple):
-        return (self.get_default_position()[0]-default_position[0], self.get_default_position()[1]-default_position[1])
+        return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
     
     def set_center(self, center:tuple) -> None:
         self.center = [center[0], center[1]]
@@ -37,16 +38,17 @@ class circle:
     
 
 
-
+def set_offset(overlap, offset):
+    return (overlap[0]+offset[0], overlap[1]+offset[1])
 
 
 def main():
     pygame.init()
 
-    screen = pygame.display.set_mode((600, 600))
+    screen = pygame.display.set_mode((800, 800))
 
-    circle_big = circle("C:/Users/julia/OneDrive/Desktop/VS Code/game/Images/physics/Physics_big_circle.png", 300, 300)
-    circle_small = circle("C:/Users/julia/OneDrive/Desktop/VS Code/game/Images/physics/Physics_small_circle.png", pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+    circle_big = circle(pathlib.Path(f"{os.getcwd()}/Images/physics/Physics_big_circle.png"), 300, 300)
+    circle_small = circle(pathlib.Path(f"{os.getcwd()}/Images/physics/Physics_small_circle.png"), pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
 
     pixel = pygame.Surface((10,10))
     pixel.fill((255,0,0))
@@ -59,6 +61,8 @@ def main():
 
     start_position = None
     speed = 0
+
+    _overlap = None
 
     while running:
         for event in pygame.event.get(): 
@@ -79,10 +83,6 @@ def main():
                 overlap = circle_small.is_overlap(circle_big.get_mask(), circle_big.get_default_position())
 
                 if overlap_ != overlap:
-                    print(f"overlap: {overlap_} -> {overlap}")
-                    print(f"get_pos: {pygame.mouse.get_pos()}")
-                    print(f"center: {circle_small.center}")
-                    print(f"default: {circle_small.get_default_position()}")
                     overlap_ = overlap
 
                 if pygame.mouse.get_pressed()[0]:
@@ -90,7 +90,12 @@ def main():
                     circle_small.set_center(pygame.mouse.get_pos())
 
             else:
-                acceleration = 80
+
+                if pygame.mouse.get_pressed()[0]:
+                    start_position = pygame.mouse.get_pos()
+                    circle_small.set_center(pygame.mouse.get_pos())
+
+                acceleration = 200
                 dt = 1/60
 
                 position = circle_small.get_center()
@@ -99,17 +104,16 @@ def main():
 
                 circle_small.set_center(position)
 
-                if circle_small.is_overlap(circle_big.get_mask(), circle_big.get_default_position()) and (speed > 0):
+                overlap = circle_small.is_overlap(circle_big.get_mask(), circle_big.get_default_position())
+                if overlap and (speed > 0):
                     speed = -speed
+                    print(overlap)
+                    _overlap = set_offset(overlap, circle_small.get_default_position())
 
 
                 screen.blit(circle_small.get_image(), circle_small.get_default_position())
-
-
-            # if overlap:
-            #     screen.blit(pixel, overlap)
-            # else:
-            #     screen.blit(pixel, (0,0))
+                if _overlap:
+                    screen.blit(pixel, _overlap)
 
             pygame.display.flip()
 
