@@ -10,6 +10,7 @@ class circle:
         self.image.set_colorkey((255,255,255))
         self.rect = self.image.get_rect()
         self.center = [x, y]
+        self.prev_center = [x, y]
 
     def get_size(self) -> tuple[int, int]:
         return self.image.get_size()
@@ -27,10 +28,17 @@ class circle:
         return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
     
     def set_center(self, center:tuple) -> None:
+        self.prev_center = self.center
         self.center = [center[0], center[1]]
+
+    def get_direction_angle(self) -> int:
+        return arctan(self.center[0]-self.prev_center[0], self.center[1]-self.prev_center[1])
 
     def get_center(self) -> tuple[int, int]:
         return self.center
+    
+    def get_prev_center(self) -> tuple[int, int]:
+        return self.prev_center
 
 
     def get_default_position(self):
@@ -40,6 +48,19 @@ class circle:
 
 def set_offset(overlap, offset):
     return (overlap[0]+offset[0], overlap[1]+offset[1])
+
+def get_normal_angle(center:tuple[int, int], overlap:tuple[int, int]) -> int:
+    gegenkathete = overlap[0] - center[0]
+    ankathete = center[1] - overlap[1]
+    
+    return arctan(ankathete, gegenkathete)
+
+def arctan(ankathete:int, gegenkathete:int) -> int:
+    if ankathete == 0:
+        angle = math.pi/2
+    else:
+        angle = math.atan(gegenkathete / ankathete)
+    return angle
 
 
 def main():
@@ -107,8 +128,22 @@ def main():
                 overlap = circle_small.is_overlap(circle_big.get_mask(), circle_big.get_default_position())
                 if overlap and (speed > 0):
                     speed = -speed
-                    print(overlap)
+                    # print(overlap)
                     _overlap = set_offset(overlap, circle_small.get_default_position())
+                    normal_angle = get_normal_angle(circle_small.get_center(), _overlap)
+                    # an = circle_small.get_prev_center()[0] - circle_small.get_center()[0]
+                    # gegen = circle_small.get_center()[1] - circle_small.get_prev_center()[1]
+                    # normal_angle = arctan(an, gegen)
+
+                    comming_in_angle = circle_small.get_direction_angle()
+
+                    angle_difference = comming_in_angle - normal_angle
+
+                    outgoing_angle = comming_in_angle - 2*angle_difference
+                    
+                    # print(normal_angle *57.3)
+                    print(f"comming[normal]going: {comming_in_angle*57.3}[{normal_angle*57.3}]{outgoing_angle*57.3}")
+                
 
 
                 screen.blit(circle_small.get_image(), circle_small.get_default_position())
