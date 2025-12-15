@@ -1,5 +1,3 @@
-import time
+import math
 
-print(time.time())
-
-print(1764954939.4002123-1764954947.1484506)
+print(math.atan(100000)*57.3)

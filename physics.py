@@ -10,6 +10,7 @@ class circle:
         self.image.set_colorkey((255,255,255))
         self.rect = self.image.get_rect()
         self.center = [x, y]
+        self.center_buffer = [x, y]
         self.prev_center = [x, y]
 
     def get_size(self) -> tuple[int, int]:
@@ -28,11 +29,15 @@ class circle:
         return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
     
     def set_center(self, center:tuple) -> None:
-        self.prev_center = self.center
-        self.center = [center[0], center[1]]
+        self.prev_center = list(self.center_buffer)
+        self.center_buffer = list(self.center)
+        self.center = list(center)
 
     def get_direction_angle(self) -> int:
-        return arctan(self.center[0]-self.prev_center[0], self.center[1]-self.prev_center[1])
+        ankathete = self.center[1] - self.prev_center[1]
+        gegenkathete = self.prev_center[0] - self.center[0]
+        print(f"{gegenkathete}/{ankathete}")
+        return arctan(ankathete, gegenkathete)
 
     def get_center(self) -> tuple[int, int]:
         return self.center
@@ -51,7 +56,7 @@ def set_offset(overlap, offset):
 
 def get_normal_angle(center:tuple[int, int], overlap:tuple[int, int]) -> int:
     gegenkathete = overlap[0] - center[0]
-    ankathete = center[1] - overlap[1]
+    ankathete = overlap[1] - center[1]
     
     return arctan(ankathete, gegenkathete)
 
@@ -79,6 +84,7 @@ def main():
 
     print(circle_small.get_size())
     overlap_ = False
+    prev = 0
 
     start_position = None
     speed = 0
@@ -122,11 +128,12 @@ def main():
                 position = circle_small.get_center()
                 speed += acceleration*dt
                 position[1] += speed*dt
-
+                prev = circle_small.get_center()
                 circle_small.set_center(position)
 
                 overlap = circle_small.is_overlap(circle_big.get_mask(), circle_big.get_default_position())
                 if overlap and (speed > 0):
+                    print(f"{prev}/{position}")
                     speed = -speed
                     # print(overlap)
                     _overlap = set_offset(overlap, circle_small.get_default_position())
@@ -137,9 +144,9 @@ def main():
 
                     comming_in_angle = circle_small.get_direction_angle()
 
-                    angle_difference = comming_in_angle - normal_angle
+                    angle_difference = comming_in_angle + normal_angle
 
-                    outgoing_angle = comming_in_angle - 2*angle_difference
+                    outgoing_angle = normal_angle + angle_difference
                     
                     # print(normal_angle *57.3)
                     print(f"comming[normal]going: {comming_in_angle*57.3}[{normal_angle*57.3}]{outgoing_angle*57.3}")
