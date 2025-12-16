@@ -62,6 +62,9 @@ def arctan(ankathete:int, gegenkathete:int) -> int:
         angle = math.atan(gegenkathete / ankathete)
     return angle
 
+def get_speed(speed:list[int,int]):
+    return math.sqrt( (speed[0]*speed[0]) + (speed[1]*speed[1]) )
+
 
 def main():
     pygame.init()
@@ -81,7 +84,8 @@ def main():
     overlap_ = False
 
     start_position = None
-    speed = 0
+    speed = [0,0]
+    tmp_cooldown = False
 
     _overlap = None
 
@@ -116,18 +120,20 @@ def main():
                     start_position = pygame.mouse.get_pos()
                     circle_small.set_center(pygame.mouse.get_pos())
 
-                acceleration = 200
+                acceleration = 10
                 dt = 1/60
 
                 position = circle_small.get_center()
-                speed += acceleration*dt
-                position[1] += speed*dt
+                speed[1] += acceleration*dt
+                position[1] += speed[1]*dt
+                position[0] += speed[0]
+
+                print(f"{speed[0]}/{speed[1]}")
 
                 circle_small.set_center(position)
 
                 overlap = circle_small.is_overlap(circle_big.get_mask(), circle_big.get_default_position())
-                if overlap and (speed > 0):
-                    speed = -speed
+                if overlap and not tmp_cooldown:
                     # print(overlap)
                     _overlap = set_offset(overlap, circle_small.get_default_position())
                     normal_angle = get_normal_angle(circle_small.get_center(), _overlap)
@@ -140,9 +146,18 @@ def main():
                     angle_difference = comming_in_angle - normal_angle
 
                     outgoing_angle = comming_in_angle - 2*angle_difference
+
+                    speed_0 = get_speed(speed)
+                    print(f"Vx, Vy, V: {speed[0]}, {speed[1]} {speed_0}")
+                    speed[0] = - speed_0 * math.cos(outgoing_angle)
+                    speed[1] = - speed_0 * math.sin(outgoing_angle)
+
+                    tmp_cooldown = True
                     
                     # print(normal_angle *57.3)
                     print(f"comming[normal]going: {comming_in_angle*57.3}[{normal_angle*57.3}]{outgoing_angle*57.3}")
+                else:
+                    tmp_cooldown = False
                 
 
 
