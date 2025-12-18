@@ -34,7 +34,7 @@ class circle:
         self.center_buffer = copy.deepcopy(list(self.center))
         self.center        = copy.deepcopy(list(center))
 
-    def get_direction_angle(self) -> int:
+    def get_direction_angle(self) -> float:
         ankathete = self.center[1] - self.prev_center[1]
         gegenkathete = self.prev_center[0] - self.center[0]
         return arctan(ankathete, gegenkathete)
@@ -54,17 +54,15 @@ class circle:
 def set_offset(overlap, offset):
     return (overlap[0]+offset[0], overlap[1]+offset[1])
 
-def get_normal_angle(center:tuple[int, int], overlap:tuple[int, int]):
-    gegenkathete = overlap[0] - center[0]
+def get_normal_angle(center:tuple, overlap:tuple):
+    gegenkathete = center[0] - overlap[0]
     ankathete = overlap[1] - center[1]
-
-    
     return arctan(ankathete, gegenkathete)
 
 def get_normal_vektor(angle:float, length) -> list:
     return [length*math.sin(angle), length*math.sin(angle)]
 
-def arctan(ankathete:int, gegenkathete:int):
+def arctan(ankathete, gegenkathete):
     if ankathete == 0:
         angle = math.pi/2
     else:
@@ -106,7 +104,9 @@ def main():
 
     _overlap = None
 
-    frames_per_second = 60
+    frames_per_second = 120
+
+    pi = 3.141
 
     while running:
         for event in pygame.event.get(): 
@@ -133,11 +133,25 @@ def main():
                     start_position = pygame.mouse.get_pos()
                     circle_small.set_center(pygame.mouse.get_pos())
 
+                offset = (-pygame.mouse.get_pos()[0]+300, -pygame.mouse.get_pos()[1]+300)
+                offset_= ( pygame.mouse.get_pos()[0]-300,  pygame.mouse.get_pos()[1]-300)
+
+                overlap_mask = circle_small.get_mask().overlap_mask(circle_big.get_mask(), offset)
+
+                if overlap_mask.count() > 0:
+                    print("x")
+                    overlap_surf = overlap_mask.to_surface(
+                        setcolor=(255, 0, 0, 255),
+                        unsetcolor=(0, 0, 0, 0)
+                    )
+                    screen.blit(overlap_surf, offset_)
+
             else:
 
                 if pygame.mouse.get_pressed()[0]:
                     start_position = pygame.mouse.get_pos()
                     circle_small.set_center(pygame.mouse.get_pos())
+                    speed = [0,0]
 
                 acceleration = 100
                 dt = 1/frames_per_second
@@ -155,20 +169,23 @@ def main():
                 if overlap:
                     _overlap = set_offset(overlap, circle_small.get_default_position())
                     normal_angle = get_normal_angle(circle_small.get_center(), _overlap)
+                    print(normal_angle*57.3)
+
+                    # normal_angle = math.atan((circle_small.get_center()[0]-_overlap[0])/(_overlap[1]-circle_small.get_center()[1]))# + (math.pi()/2)
                     speed_0 = get_speed(speed)
                     normal_vektor = get_normal_vektor(normal_angle, speed_0)
 
-                    if get_dot_product(speed, normal_vektor) < 0:
+                    if get_dot_product(speed, normal_vektor) > 0:
                         comming_in_angle = circle_small.get_direction_angle()
 
-                        angle_difference = comming_in_angle + normal_angle
+                        angle_difference = normal_angle - comming_in_angle
 
                         outgoing_angle = normal_angle + angle_difference
 
-                        print(f"{comming_in_angle*57.3}/{angle_difference*57.3}/{outgoing_angle*57.3}")
+                        print(f"{comming_in_angle*57.3}/{normal_angle*57.3}/{outgoing_angle*57.3}")
                         
-                        speed[0] =   speed_0 * math.cos(outgoing_angle)
-                        speed[1] = - speed_0 * math.sin(outgoing_angle)
+                        speed[0] =   speed_0 * math.sin(outgoing_angle)
+                        speed[1] = - speed_0 * math.cos(outgoing_angle)
                 
 
 

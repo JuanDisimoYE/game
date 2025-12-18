@@ -7,4 +7,6 @@
 18.12.2025:
 - extreme Geschwindigkeit in X Richtung ist behoben
     - die Geschwindigkeit in Y Richtung wurde mit dem Zeitinterval verrechnet, in X Richtung wurde das ausgelassen
-    - Seit dem funktioniert die kollisionsabfrage aber so gut wie gar nicht mehr
+    - Seit dem funktioniert die Kollisionsabfrage aber so gut wie gar nicht mehr
+    - Kollisionsabfrage funktioniert wieder einigermaßen, buggen sich aber oft durch den großen Kreiß durch
+    - Kollisionsabfrage muss pixelgenauer durchgeführt werden. Probehalber wurde dafür eine pixelgenaue maske eingefügt
