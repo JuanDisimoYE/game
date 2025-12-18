@@ -3,3 +3,8 @@
     - nach dem ersten Abprallen bewegt sich sehr viel schneller als die DbgDaten es vermuten lassen
     - Kollisionsabfrage funktioniert noch nicht einwandfrei -> Ball toggelt im Objekt hin und her
     - Zur Geschwindigkeitsüberwachung, sollte die aktuelle Center Position mit der Vorherigen verglichen werden
+
+18.12.2025:
+- extreme Geschwindigkeit in X Richtung ist behoben
+    - die Geschwindigkeit in Y Richtung wurde mit dem Zeitinterval verrechnet, in X Richtung wurde das ausgelassen
+    - Seit dem funktioniert die kollisionsabfrage aber so gut wie gar nicht mehr
