@@ -79,6 +79,13 @@ def get_distance(point_1:list[int,int], point_2:list[int,int]):
 def get_dot_product(vektor_1:list[int,int], vektor_2:list[int,int]) -> float:
     return (vektor_1[0]*vektor_2[0]) + (vektor_1[1]*vektor_2[1])
 
+def is_direction_field_equal(angle_1, angle_2) -> bool:
+    if (angle_2 < (angle_1+math.pi/2)) and (angle_2 > (angle_1-math.pi/2)):
+        same_direction_field = True
+    else:
+        same_direction_field = False
+    return same_direction_field
+
 
 
 def main():
@@ -89,8 +96,8 @@ def main():
     circle_big = circle(pathlib.Path(f"{os.getcwd()}/Images/physics/Physics_big_circle.png"), 300, 300)
     circle_small = circle(pathlib.Path(f"{os.getcwd()}/Images/physics/Physics_small_circle.png"), pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
 
-    pixel = pygame.Surface((10,10))
-    pixel.fill((255,0,0))
+    pixel = pygame.Surface((5,5))
+    pixel.fill((0,255,0))
 
     fps_timer = timer()
     running = True
@@ -104,7 +111,14 @@ def main():
 
     _overlap = None
 
-    frames_per_second = 120
+    frames_per_second = 60
+
+    world_c = [0,0]
+
+    _overlap_surf = None
+    _offset_ = None
+    _pixel = None
+    _world_c = None
 
     pi = 3.141
 
@@ -133,18 +147,8 @@ def main():
                     start_position = pygame.mouse.get_pos()
                     circle_small.set_center(pygame.mouse.get_pos())
 
-                offset = (-pygame.mouse.get_pos()[0]+300, -pygame.mouse.get_pos()[1]+300)
-                offset_= ( pygame.mouse.get_pos()[0]-300,  pygame.mouse.get_pos()[1]-300)
 
-                overlap_mask = circle_small.get_mask().overlap_mask(circle_big.get_mask(), offset)
 
-                if overlap_mask.count() > 0:
-                    print("x")
-                    overlap_surf = overlap_mask.to_surface(
-                        setcolor=(255, 0, 0, 255),
-                        unsetcolor=(0, 0, 0, 0)
-                    )
-                    screen.blit(overlap_surf, offset_)
 
             else:
 
@@ -167,16 +171,29 @@ def main():
                 overlap = circle_small.is_overlap(circle_big.get_mask(), circle_big.get_default_position())
 
                 if overlap:
+                    offset = (-circle_small.get_center()[0]+300, -circle_small.get_center()[1]+300)
+                    offset_= ( circle_small.get_center()[0]-300,  circle_small.get_center()[1]-300)
+                    overlap_mask = circle_small.get_mask().overlap_mask(circle_big.get_mask(), offset)
+                    if overlap_mask.count() > 0:
+                        center = overlap_mask.centroid()   # Schwerpunkt in lokalen Koordinaten der overlap_mask
+                        world_c[0] = circle_small.get_center()[0] + center[0] - 300                 # in Welt-/Screen-Koordinaten umrechnen
+                        world_c[1] = circle_small.get_center()[1] + center[1] - 300
+                        overlap_surf = overlap_mask.to_surface(setcolor=(255, 0, 0, 255), unsetcolor=(0, 0, 0, 0))
+                        # screen.blit(overlap_surf, offset_)
+
                     _overlap = set_offset(overlap, circle_small.get_default_position())
-                    normal_angle = get_normal_angle(circle_small.get_center(), _overlap)
-                    print(normal_angle*57.3)
+                    normal_angle = get_normal_angle(circle_small.get_center(), world_c)
+                    print(f"na: {normal_angle*57.3}")
+                    print(f"{_overlap}/{world_c}")
 
                     # normal_angle = math.atan((circle_small.get_center()[0]-_overlap[0])/(_overlap[1]-circle_small.get_center()[1]))# + (math.pi()/2)
                     speed_0 = get_speed(speed)
                     normal_vektor = get_normal_vektor(normal_angle, speed_0)
+                    print(f"dp: {get_dot_product(speed, normal_vektor)}")
 
-                    if get_dot_product(speed, normal_vektor) > 0:
-                        comming_in_angle = circle_small.get_direction_angle()
+                    comming_in_angle = circle_small.get_direction_angle()
+                    print(f"df: {is_direction_field_equal((normal_angle+math.pi), comming_in_angle)}")
+                    if not is_direction_field_equal((normal_angle+math.pi), comming_in_angle):
 
                         angle_difference = normal_angle - comming_in_angle
 
@@ -190,8 +207,16 @@ def main():
 
 
                 screen.blit(circle_small.get_image(), circle_small.get_default_position())
-                if _overlap:
-                    screen.blit(pixel, _overlap)
+
+                # if _overlap and not _overlap_surf: 
+                #     _overlap_surf = overlap_surf
+                #     _offset_ = offset_
+                #     _pixel = pixel
+                #     _world_c = world_c
+
+                if _overlap: 
+                    screen.blit(overlap_surf, offset_)
+                    screen.blit(pixel, world_c)
 
             pygame.display.flip()
 
