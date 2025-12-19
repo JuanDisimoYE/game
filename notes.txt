@@ -15,3 +15,7 @@
 - Kollisionsabfrage funktioniert weitesgehend
     - Ich lasse mir den Schwerpunkt der Überlappungsmaske geben und vergleiche den daraus entstehenden Normal-Winkel mit dem Eintrittswinkel
     - Kollisionsabfrage funktioniert in der oberen Helfte des großen Kreises überhaupt nicht
+- Einbinden von farbigen Linien zu Dbg-Zwecken
+    - Normalen-Winkel wird rot datgestellt, Eintritts-Winkel blau
+    - es fällt auf, dass der Normalen-Winkel in der oberen Hälfte nach außen zeigt, was erklären würde, warum die Kollisionsabftrage in der oberen Hälfte nicht funktioniert
+    
