@@ -4,9 +4,94 @@ from char import timer
 import os, pathlib
 import copy
 
-class physic:
-    def __init__(self, own_mask):
-        pass
+
+class physical_object:
+    def __init__(self, mask, center_position: tuple[int,int] = (0, 0), speed: tuple[int, int] = (0,0), stiff:bool = True):
+        self.mask = mask
+        self.stiff = stiff
+        self.center_position = center_position
+        self.default_position = self.__center_to_default(center_position)
+        self.speed = speed
+
+    def __center_to_default(self, center_position:list) -> list:
+        return [center_position[0] - self.mask.centroid()[0], center_position[1] - self.mask.centroid()[1]]
+    
+    def __default_to_center(self, default_position:list) -> list:
+        return [default_position[0] + self.mask.centroid()[0], default_position[1] + self.mask.centroid()[1]]
+
+    def set_center_position(self, center_position:list) -> None:
+        self.center_position = center_position
+        self.default_position = self.__center_to_default(center_position)
+
+    def set_default_position(self, default_position:list) -> None:
+        self.default_position = default_position
+        self.center_position = self.__default_to_center(default_position)
+
+    def set_mask(self, mask) -> None:
+        self.mask = mask
+
+    def get_center_position(self) -> list:
+        return copy.deepcopy(self.center_position)
+    
+    def get_default_position(self) -> list:
+        return copy.deepcopy(self.default_position)
+    
+    def get_speed(self) -> list:
+        return copy.deepcopy(self.speed)
+    
+    def get_default_position_difference(self, default_position:tuple):
+        return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
+
+        
+
+class physical_system:
+    def __init__(self, list_of_physical_objects:list = []):
+        self.list_of_physical_objects = list_of_physical_objects
+
+    def add_physical_object(self, physical_object:physical_object):
+        self.list_of_physical_objects.append(physical_object)
+
+    def remove_physical_object(self, physical_object:physical_object):
+        self.list_of_physical_objects.remove(physical_object)
+
+    def check_collision(self, collision_mask, default_position) -> None:
+        overlap_mask = self.mask.overlap_mask(collision_mask, self.__get_difference(default_position))
+        if overlap_mask.count() > 0:
+            center = overlap_mask.centroid()
+            world_c = [self.get_center()[0] + center[0] - 300, self.get_center()[1] + center[1] - 300]
+        else:
+            world_c = None
+        return world_c
+    
+    def __check_collisions_of_physical_object(self, physical_object:physical_object) -> None:
+        if not physical_object.stiff:
+
+            for collision_object in self.list_of_physical_objects:
+                if collision_object == physical_object:
+                    continue
+
+                collision_center = self.__get_collision_center(physical_object, collision_object)
+                if collision_center:
+                    
+
+        else:
+            return
+        
+    def __get_collision_center(self, object:physical_object, collision_object:physical_object):
+        collision_mask = object.mask.overlap_mask(collision_object.mask, object.get_default_position_difference(collision_object.get_default_position()))
+        if collision_mask.count() > 0:
+            center = collision_mask.centroid()
+            world_c = [object.get_default_position()[0] + center[0], collision_object.get_default_position()[1] + center[1]]
+        else:
+            world_c = None
+        return world_c
+    
+    def __get_difference(self, default_position:tuple):
+        return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
+
+    
+
+
 
 
 class circle:
@@ -34,6 +119,7 @@ class circle:
         overlap_mask = self.get_mask().overlap_mask(mask, self.__get_difference(default_position))
         if overlap_mask.count() > 0:
             center = overlap_mask.centroid()
+            print(f"{type(overlap_mask)}/{type(self.get_mask())}")
             world_c = [self.get_center()[0] + center[0] - 300, self.get_center()[1] + center[1] - 300]
         else:
             world_c = None

@@ -22,4 +22,9 @@
     - Normalenwinkel wird in der oberen Helfte korrekt berechnet
     - Wenn der Höhenunterschied bei der Winkelberechnung negativ wird, muss der Winkel um 180° gedreht werden
     - Es treten überall kleinere Bugs auf, wobei sich der kleine Kreis durch den großen Kreis durcharbeitet (zBs bei v gegen 0)
-    
+
+20.12.2025:
+- Erstellen physikalischer Objekte
+    - Es wurde die Klasse physikalische Objekte erstellt, welche alle erforderlichen Informationen enthält
+    - Es wurde die Klasse physikalisches System erstellt, welche alle physikalischen Objekte verwalten wird
+    - befinden sich aktuell in der Entwicklungsphase
