@@ -46,7 +46,10 @@ class circle:
     def get_direction_angle(self) -> float:
         ankathete = self.center[1] - self.prev_center[1]
         gegenkathete = self.prev_center[0] - self.center[0]
-        return arctan(ankathete, gegenkathete)
+        direction_angle = arctan(ankathete, gegenkathete)
+        if self.prev_center[1] > self.center[1]:
+            direction_angle += math.pi
+        return direction_angle
 
     def get_center(self) -> tuple[int, int]:
         return copy.deepcopy(self.center)
@@ -79,7 +82,11 @@ def set_offset(overlap, offset):
 def get_normal_angle(center:tuple, overlap:tuple):
     gegenkathete = center[0] - overlap[0]
     ankathete = overlap[1] - center[1]
-    return arctan(ankathete, gegenkathete)
+    normal_angle = arctan(ankathete, gegenkathete)
+    if overlap[1] < center[1]:
+        normal_angle += math.pi
+
+    return normal_angle
 
 def get_normal_vektor(angle:float, length) -> list:
     return [length*math.sin(angle), length*math.sin(angle)]
@@ -172,7 +179,7 @@ def main():
                 if pygame.mouse.get_pressed()[0]:
                     start_position = pygame.mouse.get_pos()
                     circle_small.set_center(pygame.mouse.get_pos())
-                    speed = [0,0]
+                    # speed = [0,0]
 
                 acceleration = 100
                 dt = 1/frames_per_second

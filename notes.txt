@@ -18,4 +18,8 @@
 - Einbinden von farbigen Linien zu Dbg-Zwecken
     - Normalen-Winkel wird rot datgestellt, Eintritts-Winkel blau
     - es fällt auf, dass der Normalen-Winkel in der oberen Hälfte nach außen zeigt, was erklären würde, warum die Kollisionsabftrage in der oberen Hälfte nicht funktioniert
+- Kollisionsabfrage funktioniert überall gleich gut
+    - Normalenwinkel wird in der oberen Helfte korrekt berechnet
+    - Wenn der Höhenunterschied bei der Winkelberechnung negativ wird, muss der Winkel um 180° gedreht werden
+    - Es treten überall kleinere Bugs auf, wobei sich der kleine Kreis durch den großen Kreis durcharbeitet (zBs bei v gegen 0)
     
