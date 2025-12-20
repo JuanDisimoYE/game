@@ -4,6 +4,10 @@ from char import timer
 import os, pathlib
 import copy
 
+class physic:
+    def __init__(self, own_mask):
+        pass
+
 
 class circle:
     def __init__(self, path, x, y):
