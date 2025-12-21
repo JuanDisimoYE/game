@@ -6,9 +6,10 @@ import copy
 
 
 class physical_object:
-    def __init__(self, mask, center_position: tuple[int,int] = (0, 0), speed: tuple[int, int] = (0,0), stiff:bool = True):
+    def __init__(self, mask, mass, center_position: tuple[int,int] = (0, 0), speed: tuple[int, int] = (0,0), stiff:bool = True):
         self.mask = mask
         self.stiff = stiff
+        self.mass = mass
         self.center_position = center_position
         self.default_position = self.__center_to_default(center_position)
         self.speed = speed
@@ -72,7 +73,7 @@ class physical_system:
 
                 collision_center = self.__get_collision_center(physical_object, collision_object)
                 if collision_center:
-                    
+                    normal_angle = get_angle_of_vector(physical_object.get_center_position(), collision_center)
 
         else:
             return
@@ -89,8 +90,13 @@ class physical_system:
     def __get_difference(self, default_position:tuple):
         return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
 
-    
-
+def get_angle_of_vector(origin:list, destination:list):
+    gegenkathete = destination[0] - origin[0]
+    ankathete = origin[1] - destination[1]
+    angle = arctan(ankathete, gegenkathete)
+    if ankathete < 0:
+        angle + math.pi
+    return angle
 
 
 
@@ -150,6 +156,8 @@ class circle:
 
     def get_default_position(self):
         return (self.center[0]-(self.image.get_size()[0]*0.5), self.center[1]-(self.image.get_size()[1]*0.5))
+
+
     
 class draw_line:
     def __init__(self, screen, color:tuple[int,int,int], thigness:int):
@@ -205,9 +213,40 @@ def is_direction_field_equal(angle_1, angle_2) -> bool:
         same_direction_field = False
     return same_direction_field
 
+def main_physic_test():
+    pygame.init()
+
+    screen = pygame.display.set_mode((800, 800))
+
+    frames_per_second = 60
+    fps_timer = timer()
+    running = True
+
+    while running:
+        for event in pygame.event.get(): 
+            if event.type == pygame.QUIT:
+                running = False
+
+        if fps_timer.is_timer_done():
+            fps_timer.set_timer(1/frames_per_second)
+
+            pygame.display.flip()
 
 
-def main():
+
+
+
+    pygame.quit()
+
+
+
+
+
+
+
+    
+
+def main_one_jumping_circle():
     pygame.init()
 
     screen = pygame.display.set_mode((800, 800))
@@ -328,6 +367,11 @@ def main():
 
 
     pygame.quit()
+
+
+def main():
+    main_physic_test()
+    # main_one_jumping_circle()
 
 
 if __name__ == "__main__":
