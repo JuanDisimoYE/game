@@ -7,12 +7,13 @@ import copy
 
 class physical_object:
     def __init__(self, mask, mass, center_position: tuple[int,int] = (0, 0), speed: tuple[int, int] = (0,0), stiff:bool = True):
-        self.mask = mask
-        self.stiff = stiff
-        self.mass = mass
-        self.center_position = center_position
+        self.mask = copy.deepcopy(mask)
+        self.stiff = copy.deepcopy(stiff)
+        self.mass = copy.deepcopy(mass)
+        self.center_position = copy.deepcopy(center_position)
+        self.previous_center_position = copy.deepcopy(center_position)
         self.default_position = self.__center_to_default(center_position)
-        self.speed = speed
+        self.speed = copy.deepcopy(speed)
 
     def __center_to_default(self, center_position:list) -> list:
         return [center_position[0] - self.mask.centroid()[0], center_position[1] - self.mask.centroid()[1]]
@@ -40,14 +41,20 @@ class physical_object:
     def get_speed(self) -> list:
         return copy.deepcopy(self.speed)
     
+    def get_direction_angle(self):
+        return get_angle_of_vector(self.previous_center_position, self.center_position)
+    
+    def get_mass(self):
+        return copy.deepcopy(self.mass)
+    
     def get_default_position_difference(self, default_position:tuple):
         return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
 
         
 
 class physical_system:
-    def __init__(self, list_of_physical_objects:list = []):
-        self.list_of_physical_objects = list_of_physical_objects
+    def __init__(self, *list_of_physical_objects:physical_object):
+        self.list_of_physical_objects = list(list_of_physical_objects)
 
     def add_physical_object(self, physical_object:physical_object):
         self.list_of_physical_objects.append(physical_object)
@@ -73,8 +80,12 @@ class physical_system:
 
                 collision_center = self.__get_collision_center(physical_object, collision_object)
                 if collision_center:
-                    normal_angle = get_angle_of_vector(physical_object.get_center_position(), collision_center)
-
+                    normal_angle = get_angle_of_vector(collision_center, physical_object.get_center_position())
+                    physical_object_impulse = __get_resulting_speed(physical_object.get_speed()) * physical_object.get_mass()
+                    collision_object_impulse = __get_resulting_speed(collision_object.get_speed()) * collision_object.get_mass()
+                    physical_impulse_angle = physical_object.get_direction_angle()
+                    collision_impulse_angle = collision_object.get_direction_angle()
+                    resulting_impulse = []
         else:
             return
         
@@ -90,6 +101,9 @@ class physical_system:
     def __get_difference(self, default_position:tuple):
         return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
 
+def __get_resulting_speed(speed:list[int,int]):
+    return math.sqrt( (speed[0]*speed[0]) + (speed[1]*speed[1]) )
+
 def get_angle_of_vector(origin:list, destination:list):
     gegenkathete = destination[0] - origin[0]
     ankathete = origin[1] - destination[1]
@@ -97,6 +111,10 @@ def get_angle_of_vector(origin:list, destination:list):
     if ankathete < 0:
         angle + math.pi
     return angle
+
+def __calculate_speed(current_object_speed, object_mass, current_collusion_object_speed, collusion_object_mass):
+    mass_ratio = collusion_object_mass/object_mass
+    return (2*mass_ratio)*current_collusion_object_speed + (1 - mass_ratio)*current_object_speed
 
 
 

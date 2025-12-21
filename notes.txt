@@ -28,3 +28,6 @@
     - Es wurde die Klasse physikalische Objekte erstellt, welche alle erforderlichen Informationen enthält
     - Es wurde die Klasse physikalisches System erstellt, welche alle physikalischen Objekte verwalten wird
     - befinden sich aktuell in der Entwicklungsphase
+
+21.12.2025:
+- Hänge am Impulsberechnungssystem fest
