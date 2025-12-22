@@ -31,3 +31,6 @@
 
 21.12.2025:
 - Hänge am Impulsberechnungssystem fest
+
+22.12.2025:
+- Entwicklung des Impulsberechnungssystems vorerst abgeschlossen

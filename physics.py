@@ -5,8 +5,33 @@ import os, pathlib
 import copy
 
 
+
+class vector:
+    def __init__(self, direction, length):
+        self.direction = copy.deepcopy(direction)
+        self.length = copy.deepcopy(length)
+
+    def get_length(self):
+        return copy.deepcopy(self.length)
+    
+    def get_direction(self):
+        return copy.deepcopy(self.direction)
+    
+    def set_length(self, length):
+        self.length = copy.deepcopy(length)
+
+    def set_direction(self, direction):
+        self.direction = copy.deepcopy(direction)
+
+def add_vector(vector_1:vector, vector_2:vector) -> vector:
+    x_length = vector_1.get_length()*math.sin(vector_1.get_direction()) + vector_2.get_length()*math.sin(vector_2.get_direction())
+    y_length = vector_1.get_length()*math.cos(vector_1.get_direction()) + vector_2.get_length()*math.cos(vector_2.get_direction())
+    length = math.sqrt( math.pow(x_length, 2) + math.pow(y_length, 2) )
+    direction = arctan(y_length, x_length)
+    return vector(direction, length)
+
 class physical_object:
-    def __init__(self, mask, mass, center_position: tuple[int,int] = (0, 0), speed: tuple[int, int] = (0,0), stiff:bool = True):
+    def __init__(self, mask, mass, center_position: tuple[int,int] = (0, 0), speed:vector = (0,0), stiff:bool = True):
         self.mask = copy.deepcopy(mask)
         self.stiff = copy.deepcopy(stiff)
         self.mass = copy.deepcopy(mass)
@@ -14,6 +39,8 @@ class physical_object:
         self.previous_center_position = copy.deepcopy(center_position)
         self.default_position = self.__center_to_default(center_position)
         self.speed = copy.deepcopy(speed)
+
+        self.collision_impulse = vector(0, 0)
 
     def __center_to_default(self, center_position:list) -> list:
         return [center_position[0] - self.mask.centroid()[0], center_position[1] - self.mask.centroid()[1]]
@@ -38,11 +65,17 @@ class physical_object:
     def get_default_position(self) -> list:
         return copy.deepcopy(self.default_position)
     
-    def get_speed(self) -> list:
+    def __refresh_speed(self):
+        self.speed.set_direction(get_angle_of_vector(self.previous_center_position, self.center_position))
+    
+    def get_speed(self):
+        self.__refresh_speed()
         return copy.deepcopy(self.speed)
     
-    def get_direction_angle(self):
-        return get_angle_of_vector(self.previous_center_position, self.center_position)
+    def get_impulse(self):
+        speed = self.get_speed()
+        speed.set_length(speed.get_length()*self.get_mass())
+        return speed
     
     def get_mass(self):
         return copy.deepcopy(self.mass)
@@ -62,14 +95,18 @@ class physical_system:
     def remove_physical_object(self, physical_object:physical_object):
         self.list_of_physical_objects.remove(physical_object)
 
-    def check_collision(self, collision_mask, default_position) -> None:
-        overlap_mask = self.mask.overlap_mask(collision_mask, self.__get_difference(default_position))
-        if overlap_mask.count() > 0:
-            center = overlap_mask.centroid()
-            world_c = [self.get_center()[0] + center[0] - 300, self.get_center()[1] + center[1] - 300]
-        else:
-            world_c = None
-        return world_c
+    def physical_system_cyclic(self):
+        for physical_object in self.list_of_physical_objects:
+            self.__check_collisions_of_physical_object(physical_object)
+
+        for physical_object in self.list_of_physical_objects:
+            self.__run_physical_step(physical_object)
+
+        return
+    
+
+    def __run_physical_step(self, physical_object:physical_object) -> None:
+        return
     
     def __check_collisions_of_physical_object(self, physical_object:physical_object) -> None:
         if not physical_object.stiff:
@@ -81,13 +118,17 @@ class physical_system:
                 collision_center = self.__get_collision_center(physical_object, collision_object)
                 if collision_center:
                     normal_angle = get_angle_of_vector(collision_center, physical_object.get_center_position())
-                    physical_object_impulse = __get_resulting_speed(physical_object.get_speed()) * physical_object.get_mass()
-                    collision_object_impulse = __get_resulting_speed(collision_object.get_speed()) * collision_object.get_mass()
-                    physical_impulse_angle = physical_object.get_direction_angle()
-                    collision_impulse_angle = collision_object.get_direction_angle()
-                    resulting_impulse = []
-        else:
-            return
+                    if not collision_object.stiff:
+                        normal_collision_impulse = collision_object.get_impulse() * math.cos(normal_angle - collision_object.get_speed().get_direction())
+                        collision_impulse = vector(normal_angle, normal_collision_impulse)
+                    else:
+                        physical_impulse = physical_object.get_impulse()
+                        normal_impulse = physical_impulse.get_length() * math.sin(math.pi - physical_impulse.get_direction())
+                        collision_impulse = vector(normal_angle, 2*normal_impulse)
+
+                    physical_object.collision_impulse = add_vector(physical_object.collision_impulse, collision_impulse)
+            
+        return
         
     def __get_collision_center(self, object:physical_object, collision_object:physical_object):
         collision_mask = object.mask.overlap_mask(collision_object.mask, object.get_default_position_difference(collision_object.get_default_position()))
@@ -100,9 +141,7 @@ class physical_system:
     
     def __get_difference(self, default_position:tuple):
         return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
-
-def __get_resulting_speed(speed:list[int,int]):
-    return math.sqrt( (speed[0]*speed[0]) + (speed[1]*speed[1]) )
+    
 
 def get_angle_of_vector(origin:list, destination:list):
     gegenkathete = destination[0] - origin[0]
