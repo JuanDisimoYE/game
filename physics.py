@@ -23,6 +23,13 @@ class vector:
     def set_direction(self, direction):
         self.direction = copy.deepcopy(direction)
 
+    def get_x_value(self):
+        return math.sin(self.get_direction())
+    
+    def get_y_value(self):
+        return math.cos(self.get_direction())
+    
+
 def add_vector(vector_1:vector, vector_2:vector) -> vector:
     x_length = vector_1.get_length()*math.sin(vector_1.get_direction()) + vector_2.get_length()*math.sin(vector_2.get_direction())
     y_length = vector_1.get_length()*math.cos(vector_1.get_direction()) + vector_2.get_length()*math.cos(vector_2.get_direction())
@@ -106,6 +113,11 @@ class physical_system:
     
 
     def __run_physical_step(self, physical_object:physical_object) -> None:
+        resulting_impulse = add_vector(physical_object.get_impulse(), physical_object.collision_impulse)
+        new_speed = resulting_impulse.get_length()/physical_object.get_mass()
+        physical_object.speed.set_length(new_speed)
+        physical_object.speed.set_direction(resulting_impulse.get_direction())
+
         return
     
     def __check_collisions_of_physical_object(self, physical_object:physical_object) -> None:
