@@ -3,39 +3,10 @@ import pygame
 from char import timer
 import os, pathlib
 import copy
+from vector import vector, add_vector, get_angle_of_vector
+from coordinate_system import coordinate_system
 
 
-
-class vector:
-    def __init__(self, direction, length):
-        self.direction = copy.deepcopy(direction)
-        self.length = copy.deepcopy(length)
-
-    def get_length(self):
-        return copy.deepcopy(self.length)
-    
-    def get_direction(self):
-        return copy.deepcopy(self.direction)
-    
-    def set_length(self, length):
-        self.length = copy.deepcopy(length)
-
-    def set_direction(self, direction):
-        self.direction = copy.deepcopy(direction)
-
-    def get_x_value(self):
-        return math.sin(self.get_direction())
-    
-    def get_y_value(self):
-        return math.cos(self.get_direction())
-    
-
-def add_vector(vector_1:vector, vector_2:vector) -> vector:
-    x_length = vector_1.get_length()*math.sin(vector_1.get_direction()) + vector_2.get_length()*math.sin(vector_2.get_direction())
-    y_length = vector_1.get_length()*math.cos(vector_1.get_direction()) + vector_2.get_length()*math.cos(vector_2.get_direction())
-    length = math.sqrt( math.pow(x_length, 2) + math.pow(y_length, 2) )
-    direction = arctan(y_length, x_length)
-    return vector(direction, length)
 
 class physical_object:
     def __init__(self, mask, mass, center_position: tuple[int,int] = (0, 0), speed:vector = (0,0), stiff:bool = True):
@@ -118,6 +89,9 @@ class physical_system:
         physical_object.speed.set_length(new_speed)
         physical_object.speed.set_direction(resulting_impulse.get_direction())
 
+
+
+
         return
     
     def __check_collisions_of_physical_object(self, physical_object:physical_object) -> None:
@@ -155,14 +129,6 @@ class physical_system:
         return (default_position[0] - self.get_default_position()[0], default_position[1] - self.get_default_position()[1])
     
 
-def get_angle_of_vector(origin:list, destination:list):
-    gegenkathete = destination[0] - origin[0]
-    ankathete = origin[1] - destination[1]
-    angle = arctan(ankathete, gegenkathete)
-    if ankathete < 0:
-        angle + math.pi
-    return angle
-
 def __calculate_speed(current_object_speed, object_mass, current_collusion_object_speed, collusion_object_mass):
     mass_ratio = collusion_object_mass/object_mass
     return (2*mass_ratio)*current_collusion_object_speed + (1 - mass_ratio)*current_object_speed
@@ -172,6 +138,7 @@ def __calculate_speed(current_object_speed, object_mass, current_collusion_objec
 class circle:
     def __init__(self, path, x, y):
         self.image = pygame.image.load(path).convert()
+        self.cs = coordinate_system(self.get_size())
         self.image.set_colorkey((255,255,255))
         self.rect = self.image.get_rect()
         self.center = [x, y]
@@ -188,12 +155,12 @@ class circle:
         return pygame.mask.from_surface(self.image)
     
     def is_overlap(self, mask, default_position):
-        return self.get_mask().overlap(mask, self.__get_difference(default_position))
+        return self.extern_to_intern(self.get_mask().overlap(mask, self.__get_difference(default_position)))
     
     def get_overlap_center(self, mask, default_position):
         overlap_mask = self.get_mask().overlap_mask(mask, self.__get_difference(default_position))
         if overlap_mask.count() > 0:
-            center = overlap_mask.centroid()
+            center = self.extern_to_intern(overlap_mask.centroid())
             print(f"{type(overlap_mask)}/{type(self.get_mask())}")
             world_c = [self.get_center()[0] + center[0] - 300, self.get_center()[1] + center[1] - 300]
         else:
@@ -209,12 +176,7 @@ class circle:
         self.center        = copy.deepcopy(list(center))
 
     def get_direction_angle(self) -> float:
-        ankathete = self.center[1] - self.prev_center[1]
-        gegenkathete = self.prev_center[0] - self.center[0]
-        direction_angle = arctan(ankathete, gegenkathete)
-        if self.prev_center[1] > self.center[1]:
-            direction_angle += math.pi
-        return direction_angle
+        return get_angle_of_vector(self.prev_center, self.center)
 
     def get_center(self) -> tuple[int, int]:
         return copy.deepcopy(self.center)
@@ -230,16 +192,20 @@ class circle:
     
 class draw_line:
     def __init__(self, screen, color:tuple[int,int,int], thigness:int):
+        self.cs = coordinate_system(screen.get_size())
         self.screen = screen
         self.color = color
         self.thigness = thigness
+
+    def __draw(self, point_1, point_2):
+        pygame.draw.line(self.screen, self.color, self.cs.intern_to_extern(point_1), self.cs.intern_to_extern(point_2), self.thigness)
     
     def draw(self, point_1, point_2):
-        pygame.draw.line(self.screen, self.color, point_1, point_2, self.thigness)
+        self.__draw(point_1, point_2)
 
     def draw(self, origin, length, angle):
         point_2 = ( (origin[0]+length*math.sin(angle)), (origin[1]-length*math.cos(angle)) )
-        pygame.draw.line(self.screen, self.color, origin, point_2, self.thigness)
+        self.__draw(origin, point_2)
 
     
 
@@ -318,7 +284,10 @@ def main_physic_test():
 def main_one_jumping_circle():
     pygame.init()
 
-    screen = pygame.display.set_mode((800, 800))
+    screen_size = (800, 800)
+    screen = pygame.display.set_mode(screen_size)
+    cs = coordinate_system(screen_size)
+
 
     circle_big = circle(pathlib.Path(f"{os.getcwd()}/Images/physics/Physics_big_circle.png"), 300, 300)
     circle_small = circle(pathlib.Path(f"{os.getcwd()}/Images/physics/Physics_small_circle.png"), pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
@@ -332,7 +301,6 @@ def main_one_jumping_circle():
     fps_timer = timer()
     running = True
 
-    print(circle_small.get_size())
     overlap_ = False
 
     start_position = None
@@ -353,21 +321,16 @@ def main_one_jumping_circle():
             fps_timer.set_timer(1/frames_per_second)
 
             screen.fill((0,255,0))
-            screen.blit(circle_big.get_image(), (0, 0))
+            screen.blit(circle_big.get_image(), cs.intern_to_extern((0, 0)))
 
             if start_position == None:
-                circle_small.set_center(pygame.mouse.get_pos())
+                circle_small.set_center(cs.extern_to_intern(pygame.mouse.get_pos()))
 
-                screen.blit(circle_small.get_image(), circle_small.get_default_position())
-
-                overlap = circle_small.is_overlap(circle_big.get_mask(), circle_big.get_default_position())
-
-                if overlap_ != overlap:
-                    overlap_ = overlap
+                screen.blit(circle_small.get_image(), cs.intern_to_extern(circle_small.get_default_position()))
 
                 if pygame.mouse.get_pressed()[0]:
-                    start_position = pygame.mouse.get_pos()
-                    circle_small.set_center(pygame.mouse.get_pos())
+                    start_position = cs.extern_to_intern(pygame.mouse.get_pos())
+                    circle_small.set_center(cs.extern_to_intern(pygame.mouse.get_pos()))
 
 
 
@@ -375,8 +338,8 @@ def main_one_jumping_circle():
             else:
 
                 if pygame.mouse.get_pressed()[0]:
-                    start_position = pygame.mouse.get_pos()
-                    circle_small.set_center(pygame.mouse.get_pos())
+                    start_position = cs.extern_to_intern(pygame.mouse.get_pos())
+                    circle_small.set_center(start_position)
                     # speed = [0,0]
 
                 acceleration = 100
@@ -419,7 +382,7 @@ def main_one_jumping_circle():
                 
 
 
-                screen.blit(circle_small.get_image(), circle_small.get_default_position())
+                screen.blit(circle_small.get_image(), cs.intern_to_extern(circle_small.get_default_position()))
 
                 if pre_overlap_center:
                     normal_line.draw(pre_overlap_center, 50, pre_normal_angle)
@@ -427,7 +390,7 @@ def main_one_jumping_circle():
 
                 if overlap_center: 
                     # screen.blit(overlap_surf, offset_)
-                    screen.blit(pixel, overlap_center)
+                    screen.blit(pixel, cs.intern_to_extern(overlap_center))
 
             pygame.display.flip()
 
@@ -439,8 +402,8 @@ def main_one_jumping_circle():
 
 
 def main():
-    main_physic_test()
-    # main_one_jumping_circle()
+    # main_physic_test()
+    main_one_jumping_circle()
 
 
 if __name__ == "__main__":
